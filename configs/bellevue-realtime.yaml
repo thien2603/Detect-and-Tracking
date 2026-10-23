@@ -1,0 +1,205 @@
+model:
+  weights: D:\MyWork\Tracking_Detection\Tracking_Detection_full_source\models\yolo11n.pt
+  confidence: 0.25
+  imgsz: 640
+  classes:
+  - person
+  - car
+  - motorcycle
+  - bus
+  - truck
+  device: '0'
+  torch_threads: 2
+  batch_size: 4
+  batch_wait_ms: 5
+streaming:
+  enabled: true
+  rtsp_server: rtsp://127.0.0.1:8554/processed
+  output_fps: 12
+  ffmpeg_bin: ffmpeg
+  preset: ultrafast
+  max_frame_age_ms: 800.0
+  timestamp_overlay: true
+database:
+  path: D:\MyWork\Tracking_Detection\Tracking_Detection_full_source\data\database\bellevue.db
+  snapshot_dir: D:\MyWork\Tracking_Detection\Tracking_Detection_full_source\data\snapshots\bellevue
+api:
+  host: 0.0.0.0
+  port: 8000
+logging:
+  level: INFO
+  file: D:\MyWork\Tracking_Detection\Tracking_Detection_full_source\logs\bellevue.log
+  metrics_interval_seconds: 5.0
+cameras:
+- id: cam01-eastgate
+  enabled: true
+  source:
+    type: rtsp
+    uri: rtsp://127.0.0.1:8554/source/cam01-eastgate
+    reconnect_seconds: 0.5
+  output_path: bellevue/eastgate
+  detection_region: null
+  counting_region:
+    id: count_75
+    points:
+    - - 327
+      - 180
+    - - 714
+      - 219
+    - - 639
+      - 530
+    - - 137
+      - 464
+  line:
+    id: two_way_count
+    start:
+    - 232
+    - 322
+    end:
+    - 676
+    - 374
+    deadband_px: 6.0
+    cooldown_seconds: 0.75
+  forbidden_zones:
+  - id: alert_25_demo
+    points:
+    - - 714
+      - 219
+    - - 839
+      - 232
+    - - 802
+      - 552
+    - - 639
+      - 530
+  zone_schedule: null
+  tracker_iou_threshold: 0.15
+  tracker_max_missed: 8
+- id: cam02-newport
+  enabled: true
+  source:
+    type: rtsp
+    uri: rtsp://127.0.0.1:8554/source/cam02-newport
+    reconnect_seconds: 0.5
+  output_path: bellevue/newport
+  detection_region: null
+  counting_region:
+    id: count_75
+    points:
+    - - 505
+      - 166
+    - - 686
+      - 130
+    - - 693
+      - 328
+    - - 233
+      - 487
+  line:
+    id: two_way_count
+    start:
+    - 369
+    - 326
+    end:
+    - 690
+    - 229
+    deadband_px: 6.0
+    cooldown_seconds: 0.75
+  forbidden_zones:
+  - id: alert_25_demo
+    points:
+    - - 686
+      - 130
+    - - 755
+      - 117
+    - - 868
+      - 268
+    - - 693
+      - 328
+  zone_schedule: null
+  tracker_iou_threshold: 0.15
+  tracker_max_missed: 8
+- id: cam03-se38th
+  enabled: true
+  source:
+    type: rtsp
+    uri: rtsp://127.0.0.1:8554/source/cam03-se38th
+    reconnect_seconds: 0.5
+  output_path: bellevue/se38th
+  detection_region: null
+  counting_region:
+    id: count_75
+    points:
+    - - 373
+      - 200
+    - - 752
+      - 240
+    - - 594
+      - 610
+    - - 163
+      - 446
+  line:
+    id: two_way_count
+    start:
+    - 268
+    - 323
+    end:
+    - 673
+    - 425
+    deadband_px: 6.0
+    cooldown_seconds: 0.75
+  forbidden_zones:
+  - id: alert_25_demo
+    points:
+    - - 752
+      - 240
+    - - 857
+      - 251
+    - - 714
+      - 655
+    - - 594
+      - 610
+  zone_schedule: null
+  tracker_iou_threshold: 0.15
+  tracker_max_missed: 8
+- id: cam04-ne8th
+  enabled: true
+  source:
+    type: rtsp
+    uri: rtsp://127.0.0.1:8554/source/cam04-ne8th
+    reconnect_seconds: 0.5
+  output_path: bellevue/ne8th
+  detection_region: null
+  counting_region:
+    id: count_75
+    points:
+    - - 482
+      - 246
+    - - 761
+      - 235
+    - - 917
+      - 548
+    - - 432
+      - 650
+  line:
+    id: two_way_count
+    start:
+    - 457
+    - 448
+    end:
+    - 839
+    - 392
+    deadband_px: 6.0
+    cooldown_seconds: 0.75
+  forbidden_zones:
+  - id: alert_25_demo
+    points:
+    - - 761
+      - 235
+    - - 866
+      - 231
+    - - 1099
+      - 510
+    - - 917
+      - 548
+  zone_schedule: null
+  tracker_iou_threshold: 0.15
+  tracker_max_missed: 8

@@ -1,1 +1,191 @@
-# Detect-and-Tracking
+# Tracking Detection — mã nguồn đầy đủ
+
+Bản dựng lại 0.2.0, ngày 20/10/2026. Đây là mã nguồn được tạo lại sau khi workspace
+cũ bị đặt lại, không phải bản khôi phục byte-for-byte của ZIP cũ. Repository chỉ lưu
+mã nguồn, cấu hình, tài liệu và tests; model, video/dataset và kết quả sinh ra không
+được đưa lên GitHub. Dùng các script tải dữ liệu/model bên dưới để chuẩn bị khi chạy.
+
+Chức năng: YOLO11 nhận diện ô tô, tracker IoU gán ID riêng cho từng camera, vệt di chuyển,
+đường đếm hai chiều, vùng cảnh báo đa giác, ảnh sự kiện, SQLite, JSON, FastAPI và đầu ra RTSP.
+Một model dùng chung được điều phối bởi hàng đợi công bằng có giới hạn. Mỗi camera có
+buffer một frame mới nhất. Video cao tốc dùng lịch vùng theo thời gian cho camera di chuyển.
+
+## Lấy mã nguồn trên Windows
+
+Clone repository bằng PowerShell:
+
+```powershell
+$dest = 'D:\MyWork\Tracking_Detection'
+git clone https://github.com/thien2603/Detect-and-Tracking.git $dest
+Set-Location $dest
+```
+
+## Cài đặt trên Windows
+
+Cần Python **3.12** và FFmpeg có cả `ffmpeg` lẫn `ffprobe` trong PATH.
+Có thể cài FFmpeg bằng `winget install --id Gyan.FFmpeg -e`, sau đó mở lại PowerShell.
+Script setup mặc định cài PyTorch CPU. GPU cần bản PyTorch phù hợp CUDA của máy.
+
+```powershell
+Set-Location 'D:\MyWork\Tracking_Detection'
+powershell -ExecutionPolicy Bypass -File .\scripts\setup.ps1
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Nếu không dùng script:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+.\.venv\Scripts\python.exe -m pip install -e ".[inference,dev]"
+```
+
+## Tải model, tải video và xuất kết quả
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.download_model
+.\.venv\Scripts\python.exe -m scripts.download_expressway
+.\.venv\Scripts\python.exe -m scripts.render_video --config configs/vietnam-expressway.yaml
+```
+
+Hoặc: `powershell -ExecutionPolicy Bypass -File .\scripts\run_expressway.ps1 -Download`.
+Chạy lại mà không tải: bỏ `-Download`.
+
+Video tải từ trình phát công khai của bài VietNamNet được ghi trong `docs/dataset.md`.
+Video gốc đã kiểm tra ở phiên trước dài 125,8 giây. Script kiểm tra thời lượng 120–180 giây;
+nếu nhà xuất bản đổi nguồn hoặc chặn truy cập, script báo lỗi. Không lặp hoặc làm chậm để kéo dài.
+Nguồn có ô tô con, xe khách, xe tải; cấu hình **chỉ xử lý lớp `car`**.
+
+Kết quả:
+
+```text
+data/vietnam-expressway-tracking.mp4             Video có ID và vùng cảnh báo
+data/vietnam-expressway-tracking.events.json     Nhật ký theo thời gian video
+data/vietnam-expressway-tracking.db              SQLite của lần chạy offline
+data/vietnam-expressway-tracking-snapshots/      Ảnh sự kiện
+```
+
+Offline xử lý toàn bộ frame được lấy mẫu tại FPS đầu ra; thời gian xử lý có thể lâu hơn video.
+`--fps 10` mặc định, `--max-seconds 10` để chạy thử. Nguồn có FPS thấp hơn sẽ giữ FPS nguồn.
+Nguồn phải có kích thước chẵn để mã hóa H.264/yuv420p.
+
+## Chạy API
+
+```powershell
+$env:CONFIG_PATH = 'configs/vietnam-expressway.yaml'
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Mở `http://127.0.0.1:8000/docs`. Dừng bằng Ctrl+C. File source được phát theo tốc độ video,
+khác với renderer offline. API không tự sinh một file MP4 đầy đủ; dùng renderer để lưu video.
+
+| Endpoint | Chức năng |
+|---|---|
+| `GET /health` | Trạng thái ứng dụng và số sự kiện bị bỏ/lưu lỗi |
+| `GET /api/v1/cameras` | Trạng thái, ID phiên, FPS, số frame và lỗi từng camera |
+| `PUT /api/v1/cameras/{id}/enabled` | Bật/tắt; JSON `{"enabled": true}` hoặc `false` |
+| `GET /api/v1/cameras/{id}/frame.jpg` | Frame đã xử lý gần nhất |
+| `GET /api/v1/events` | Lọc theo `camera_id`, `start`, `end`, `limit` |
+| `GET /api/v1/events/{id}/snapshot` | Ảnh sự kiện |
+
+Thời gian lọc sự kiện là thời gian chạy máy theo UTC, không phải thời điểm ghi hình năm 2024.
+`video_seconds` là số giây tính từ đầu video. Khoảng thời gian ISO không có múi giờ được hiểu UTC.
+API chưa có xác thực; chạy trên `127.0.0.1` khi dùng trên máy cá nhân.
+
+## Nhiều camera và RTSP
+
+`configs/config.yaml` mặc định giống cấu hình cao tốc để chạy ngay sau khi tải dữ liệu.
+`configs/four-cameras.yaml` là cấu hình mẫu 4 file, cần tự cung cấp video vào
+`data/videos/traffic/camera_01.mp4` … `camera_04.mp4`, hoặc sửa nguồn thành:
+
+```yaml
+source:
+  type: rtsp
+  uri: rtsp://your-camera-host/stream
+  loop: false
+```
+
+Mỗi camera cố định cần hiệu chỉnh ROI/đường đếm/vùng theo chính góc quay đó.
+Không áp lịch vùng của clip cao tốc cho camera khác. Cấu hình mẫu 4 camera không tự tạo vùng cấm.
+
+Để phát RTSP, khởi động MediaMTX bằng Docker Compose hoặc bản MediaMTX cho Windows.
+Đặt `streaming.enabled: true`; đầu ra: `rtsp://localhost:8554/processed/<output_path>`.
+Với Compose, đặt host RTSP trong mạng container là `mediamtx`, đã có ở `configs/docker.yaml`.
+
+```powershell
+# Chuẩn bị video/model trước bằng các lệnh phía trên
+docker compose up --build
+```
+
+Compose gồm ứng dụng và MediaMTX, dùng video file làm nguồn trực tiếp, không cần dịch vụ replay riêng.
+Model và dữ liệu được mount từ máy chủ. Dockerfile là CPU; chưa xác minh Docker/Windows trên
+máy của người dùng. Chỉ chạy một worker Uvicorn để tránh nhân đôi camera và model.
+
+## Cấu trúc và cách sửa
+
+Xem `docs/file-structure.md` để biết vai trò từng file, `docs/vietnam-expressway.md` để chỉnh vùng,
+và `docs/validation.md` để biết các kiểm tra thực tế của bản này.
+
+```text
+app/             Mã nhận diện, tracking, camera, quy tắc, API và streaming
+configs/         Cấu hình nguồn, model, lịch vùng
+scripts/         Tải dữ liệu/model, render, xem vùng, setup Windows, smoke test
+tests/           Kiểm thử hồi quy và tích hợp bằng detector giả
+benchmarks/      Lấy mẫu số liệu API; không phải kết quả đo sẵn
+infrastructure/  Cấu hình MediaMTX
+docs/            Tài liệu, nguồn và giới hạn
+models/          Model .pt được tải riêng
+data/            Video, JSON, SQLite, snapshots được tạo khi chạy
+logs/            Log có xoay vòng
+```
+
+Repository không chứa môi trường `.venv`, cache, database, log, model, video hoặc
+kết quả sinh ra. Có đầy đủ mã để tải dữ liệu/model và tạo lại kết quả.
+
+## Linux/macOS
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+python -m pip install -e '.[inference,dev]'
+python -m scripts.download_model
+python -m scripts.download_expressway
+python -m scripts.render_video
+python -m pytest
+python -m ruff check app scripts tests benchmarks
+```
+
+Trên macOS hãy cài PyTorch theo hướng dẫn chính thức cho nền tảng thay vì CPU wheel index Linux.
+
+## Giới hạn
+
+Đợt bổ sung cho Trần Danh Thiện: [thay đổi, kiểm thử, dữ liệu người và hồ sơ nộp](docs/supplement-2026-10-22.md).
+Config 4 nguồn có cả người: `configs/submission-four.yaml`; cấu hình thử tiết kiệm
+tài nguyên: `configs/submission-efficient.yaml`. Bốn config Bellevue cũ được giữ nguyên.
+
+Hướng dẫn service RTSP bốn camera, benchmark và trạng thái kiểm tra thực tế:
+[Chạy realtime và benchmark](docs/realtime-and-benchmark.md). Smoke test đã xử lý
+được bốn camera đồng thời nhưng **chưa đạt ≥10 FPS đầu ra/camera và độ trễ dưới 1 giây**.
+
+- Tracker IoU có thể đổi ID khi che khuất, bỏ sót hoặc xe chuyển động nhanh. Chưa có đánh giá IDF1/MOTA.
+- `entry`: đã quan sát cùng ID bên ngoài rồi vào vùng. `first_seen_inside`: lần đầu thấy đã trong vùng.
+- Không nhận dạng biển số, không đo vận tốc thật, không tự kết luận vi phạm giao thông.
+- Vùng camera di chuyển được nội suy từ các mốc hiệu chỉnh thủ công, có sai số.
+- FPS encode có thể gồm frame lặp khi tốc độ phát RTSP cao hơn inference. API tách số frame đầu ra
+  và số frame mới. `internal_latency_ms` chỉ đo thời gian nội bộ, không phải độ trễ camera đến màn hình.
+- Hàng đợi lưu ảnh có giới hạn, theo dõi `evidence_dropped` và `evidence_failed` ở `/health`.
+
+## Tối ưu realtime (22/10/2026)
+
+Pipeline bất đồng bộ, dự đoán Kalman có hạn, FP16 CUDA và encoder NVENC có CPU
+fallback: xem [hướng dẫn và cách đo](docs/optimization-2026-10-22.md).
+Cấu hình gốc và kết quả benchmark trước vẫn được giữ để đối chứng.
+
+Đã có [đối chứng 60 giây trên 4 camera](docs/optimization-results-2026-10-23.md):
+video mới hơn11 FPS/camera, nhưng YOLO thật2,67–3,02 FPS/camera; xem đầy đủ giới hạn
+tracking, tuổi detection và CPU trước khi dùng kết quả để kết luận đạt yêu cầu.
+
+Có thêm chế độ4camera/4model độc lập và tùy chọn CUDA stream riêng. Xem
+[cách chạy và đối chứng các chế độ model](docs/model-modes-2026-10-23.md).
+Mặc định vẫn giữ model dùng chung; không tự chuyển sang nhiều model.

@@ -1,0 +1,29 @@
+{
+  "purpose": "Geometry draft only; not an AppConfig or traffic-violation definition.",
+  "frame_size": [1280, 720],
+  "count_fraction": 0.75,
+  "alert_side": "right",
+  "preview_seconds": 30,
+  "cameras": [
+    {
+      "id": "cam01-eastgate",
+      "source": "data/videos/bellevue/cam01-eastgate-180s.mp4",
+      "intersection": [[327, 180], [839, 232], [802, 552], [137, 464]]
+    },
+    {
+      "id": "cam02-newport",
+      "source": "data/videos/bellevue/cam02-newport-180s.mp4",
+      "intersection": [[505, 166], [755, 117], [868, 268], [233, 487]]
+    },
+    {
+      "id": "cam03-se38th",
+      "source": "data/videos/bellevue/cam03-se38th-180s.mp4",
+      "intersection": [[373, 200], [857, 251], [714, 655], [163, 446]]
+    },
+    {
+      "id": "cam04-ne8th",
+      "source": "data/videos/bellevue/cam04-ne8th-180s.mp4",
+      "intersection": [[482, 246], [866, 231], [1099, 510], [432, 650]]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-camera-video-analytics"
+version = "0.2.0"
+description = "Car tracking and geometric zone alerts for video and RTSP cameras"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "pydantic>=2.7,<3",
+  "PyYAML>=6,<7", "numpy>=1.26,<3", "opencv-python-headless>=4.10,<5"
+]
+
+[project.optional-dependencies]
+inference = ["ultralytics>=8.3,<9"]
+dev = ["pytest>=8,<10", "pytest-timeout>=2,<3", "httpx>=0.27,<1",
+       "httpx2>=2,<3", "ruff>=0.8,<1", "psutil>=6,<8"]
+benchmark = ["psutil>=6,<8"]
+report = ["reportlab>=4,<5"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

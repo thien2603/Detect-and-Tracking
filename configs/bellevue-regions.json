@@ -1,0 +1,308 @@
+{
+  "status": "region_geometry_reference_not_runtime_app_config",
+  "area_basis": "pixel area of each manually selected intersection; not real-world area",
+  "counting_note": "Approved polygons are connected through configs/bellevue.yaml. One observed outside-to-inside entry is counted per track ID.",
+  "alert_note": "Demonstration alert zones, not evidence of actual road restrictions.",
+  "cameras": [
+    {
+      "camera_id": "cam01-eastgate",
+      "source": "data/videos/bellevue/cam01-eastgate-180s.mp4",
+      "frame_size": [
+        1280,
+        720
+      ],
+      "detection_region": {
+        "id": "intersection",
+        "points": [
+          [
+            327,
+            180
+          ],
+          [
+            839,
+            232
+          ],
+          [
+            802,
+            552
+          ],
+          [
+            137,
+            464
+          ]
+        ]
+      },
+      "counting_region": {
+        "id": "count_75",
+        "points": [
+          [
+            327,
+            180
+          ],
+          [
+            714,
+            219
+          ],
+          [
+            639,
+            530
+          ],
+          [
+            137,
+            464
+          ]
+        ]
+      },
+      "forbidden_zones": [
+        {
+          "id": "alert_25_demo",
+          "points": [
+            [
+              714,
+              219
+            ],
+            [
+              839,
+              232
+            ],
+            [
+              802,
+              552
+            ],
+            [
+              639,
+              530
+            ]
+          ]
+        }
+      ],
+      "count_area_percent": 74.994,
+      "alert_area_percent": 25.006
+    },
+    {
+      "camera_id": "cam02-newport",
+      "source": "data/videos/bellevue/cam02-newport-180s.mp4",
+      "frame_size": [
+        1280,
+        720
+      ],
+      "detection_region": {
+        "id": "intersection",
+        "points": [
+          [
+            505,
+            166
+          ],
+          [
+            755,
+            117
+          ],
+          [
+            868,
+            268
+          ],
+          [
+            233,
+            487
+          ]
+        ]
+      },
+      "counting_region": {
+        "id": "count_75",
+        "points": [
+          [
+            505,
+            166
+          ],
+          [
+            686,
+            130
+          ],
+          [
+            693,
+            328
+          ],
+          [
+            233,
+            487
+          ]
+        ]
+      },
+      "forbidden_zones": [
+        {
+          "id": "alert_25_demo",
+          "points": [
+            [
+              686,
+              130
+            ],
+            [
+              755,
+              117
+            ],
+            [
+              868,
+              268
+            ],
+            [
+              693,
+              328
+            ]
+          ]
+        }
+      ],
+      "count_area_percent": 74.95,
+      "alert_area_percent": 25.05
+    },
+    {
+      "camera_id": "cam03-se38th",
+      "source": "data/videos/bellevue/cam03-se38th-180s.mp4",
+      "frame_size": [
+        1280,
+        720
+      ],
+      "detection_region": {
+        "id": "intersection",
+        "points": [
+          [
+            373,
+            200
+          ],
+          [
+            857,
+            251
+          ],
+          [
+            714,
+            655
+          ],
+          [
+            163,
+            446
+          ]
+        ]
+      },
+      "counting_region": {
+        "id": "count_75",
+        "points": [
+          [
+            373,
+            200
+          ],
+          [
+            752,
+            240
+          ],
+          [
+            594,
+            610
+          ],
+          [
+            163,
+            446
+          ]
+        ]
+      },
+      "forbidden_zones": [
+        {
+          "id": "alert_25_demo",
+          "points": [
+            [
+              752,
+              240
+            ],
+            [
+              857,
+              251
+            ],
+            [
+              714,
+              655
+            ],
+            [
+              594,
+              610
+            ]
+          ]
+        }
+      ],
+      "count_area_percent": 75.033,
+      "alert_area_percent": 24.967
+    },
+    {
+      "camera_id": "cam04-ne8th",
+      "source": "data/videos/bellevue/cam04-ne8th-180s.mp4",
+      "frame_size": [
+        1280,
+        720
+      ],
+      "detection_region": {
+        "id": "intersection",
+        "points": [
+          [
+            482,
+            246
+          ],
+          [
+            866,
+            231
+          ],
+          [
+            1099,
+            510
+          ],
+          [
+            432,
+            650
+          ]
+        ]
+      },
+      "counting_region": {
+        "id": "count_75",
+        "points": [
+          [
+            482,
+            246
+          ],
+          [
+            761,
+            235
+          ],
+          [
+            917,
+            548
+          ],
+          [
+            432,
+            650
+          ]
+        ]
+      },
+      "forbidden_zones": [
+        {
+          "id": "alert_25_demo",
+          "points": [
+            [
+              761,
+              235
+            ],
+            [
+              866,
+              231
+            ],
+            [
+              1099,
+              510
+            ],
+            [
+              917,
+              548
+            ]
+          ]
+        }
+      ],
+      "count_area_percent": 75.035,
+      "alert_area_percent": 24.965
+    }
+  ]
+}

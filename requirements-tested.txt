@@ -1,0 +1,14 @@
+# Versions used for validation on Linux/Python 3.12; CPU torch index is needed.
+# Install using pyproject.toml; see README.md for CPU/GPU setup.
+fastapi==0.141.1
+uvicorn==0.52.1
+pydantic==2.13.4
+PyYAML==6.0.3
+numpy==2.3.5
+opencv-python-headless==5.0.0.93
+ultralytics==8.4.183
+torch==2.14.1+cpu
+torchvision==0.29.1+cpu
+pytest==9.1.1
+httpx==0.28.1
+ruff==0.17.1

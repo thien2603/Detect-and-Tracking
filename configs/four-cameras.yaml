@@ -1,0 +1,30 @@
+# Example for four fixed cameras. Supply local clips or replace sources with RTSP URIs.
+# ROI coordinates depend on each camera. No invented forbidden zone is enabled here.
+model:
+  weights: models/yolo11n.pt
+  confidence: 0.25
+  imgsz: 416
+  classes: [car]
+  device: cpu
+  torch_threads: 2
+  batch_size: 1
+streaming:
+  enabled: true
+  rtsp_server: rtsp://localhost:8554/processed
+  output_fps: 10
+database:
+  path: data/database/four-cameras.db
+  snapshot_dir: data/snapshots/four-cameras
+cameras:
+  - id: camera_01
+    source: {type: file, uri: data/videos/traffic/camera_01.mp4, loop: true}
+    output_path: camera01
+  - id: camera_02
+    source: {type: file, uri: data/videos/traffic/camera_02.mp4, loop: true}
+    output_path: camera02
+  - id: camera_03
+    source: {type: file, uri: data/videos/traffic/camera_03.mp4, loop: true}
+    output_path: camera03
+  - id: camera_04
+    source: {type: file, uri: data/videos/traffic/camera_04.mp4, loop: true}
+    output_path: camera04

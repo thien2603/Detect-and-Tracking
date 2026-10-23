@@ -1,0 +1,190 @@
+model:
+  weights: models/yolo11n.pt
+  confidence: 0.25
+  imgsz: 480
+  classes:
+  - person
+  - car
+  - motorcycle
+  - bus
+  - truck
+  device: '0'
+  torch_threads: 2
+  batch_size: 4
+  batch_wait_ms: 15
+  async_inference: true
+  detect_interval: 2
+  half: true
+  rect: false
+streaming:
+  enabled: false
+  output_fps: 14
+  max_output_width: 960
+  max_output_height: 540
+  max_frame_age_ms: 700
+  encoder: auto
+database:
+  path: data/database/submission.db
+  snapshot_dir: data/snapshots/submission
+logging:
+  file: logs/submission.log
+cameras:
+- id: cam01-eastgate
+  source:
+    type: file
+    uri: data/videos/bellevue/cam01-eastgate-180s.mp4
+    loop: false
+  output_path: bellevue/eastgate
+  line:
+    id: two_way_count
+    start:
+    - 232
+    - 322
+    end:
+    - 676
+    - 374
+    deadband_px: 6
+  counting_region:
+    id: count_75
+    points:
+    - - 327
+      - 180
+    - - 714
+      - 219
+    - - 639
+      - 530
+    - - 137
+      - 464
+  forbidden_zones:
+  - id: alert_25_demo
+    points:
+    - - 714
+      - 219
+    - - 839
+      - 232
+    - - 802
+      - 552
+    - - 639
+      - 530
+  tracker_motion: true
+  prediction_max_age_ms: 700
+- id: cam02-newport
+  source:
+    type: file
+    uri: data/videos/bellevue/cam02-newport-180s.mp4
+    loop: false
+  output_path: bellevue/newport
+  line:
+    id: two_way_count
+    start:
+    - 369
+    - 326
+    end:
+    - 690
+    - 229
+    deadband_px: 6
+  counting_region:
+    id: count_75
+    points:
+    - - 505
+      - 166
+    - - 686
+      - 130
+    - - 693
+      - 328
+    - - 233
+      - 487
+  forbidden_zones:
+  - id: alert_25_demo
+    points:
+    - - 686
+      - 130
+    - - 755
+      - 117
+    - - 868
+      - 268
+    - - 693
+      - 328
+  tracker_motion: true
+  prediction_max_age_ms: 700
+- id: cam04-ne8th
+  source:
+    type: file
+    uri: data/videos/bellevue/cam04-ne8th-180s.mp4
+    loop: false
+  output_path: bellevue/ne8th
+  line:
+    id: two_way_count
+    start:
+    - 457
+    - 448
+    end:
+    - 839
+    - 392
+    deadband_px: 6
+  counting_region:
+    id: count_75
+    points:
+    - - 482
+      - 246
+    - - 761
+      - 235
+    - - 917
+      - 548
+    - - 432
+      - 650
+  forbidden_zones:
+  - id: alert_25_demo
+    points:
+    - - 761
+      - 235
+    - - 866
+      - 231
+    - - 1099
+      - 510
+    - - 917
+      - 548
+  tracker_motion: true
+  prediction_max_age_ms: 700
+- id: cam05-crosswalk
+  output_path: crosswalk-people
+  source:
+    type: file
+    uri: data/videos/pedestrians/crosswalk-video002-180s.mp4
+    loop: true
+  line:
+    id: crosswalk_two_way
+    start:
+    - 550
+    - 170
+    end:
+    - 550
+    - 325
+    deadband_px: 6
+    cooldown_seconds: 0.75
+  counting_region:
+    id: crosswalk_count_75_demo
+    points:
+    - - 133
+      - 183
+    - - 747
+      - 176
+    - - 762
+      - 310
+    - - 128
+      - 311
+  forbidden_zones:
+  - id: crosswalk_alert_25_demo
+    points:
+    - - 747
+      - 176
+    - - 952
+      - 174
+    - - 973
+      - 310
+    - - 762
+      - 310
+  tracker_iou_threshold: 0.15
+  tracker_max_missed: 8
+  tracker_motion: true
+  prediction_max_age_ms: 700

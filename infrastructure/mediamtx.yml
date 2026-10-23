@@ -1,0 +1,6 @@
+logLevel: warn
+rtsp: yes
+rtspAddress: :8554
+protocols: [tcp]
+paths:
+  all_others:

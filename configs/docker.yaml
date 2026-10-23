@@ -1,0 +1,41 @@
+model:
+  weights: models/yolo11n.pt
+  confidence: 0.25
+  imgsz: 640
+  classes:
+  - car
+  device: cpu
+  torch_threads: 2
+  batch_size: 1
+streaming:
+  enabled: true
+  output_fps: 10
+  rtsp_server: rtsp://mediamtx:8554/processed
+database:
+  path: data/database/vietnam-expressway.db
+  snapshot_dir: data/snapshots/vietnam-expressway
+logging:
+  level: INFO
+  file: logs/vietnam-expressway.log
+cameras:
+- id: vietnam_expressway
+  source:
+    type: file
+    uri: data/videos/vietnam-expressway/highway-126s.mp4
+    loop: false
+  output_path: vietnam-expressway
+  zone_schedule: configs/vietnam-expressway-zones.json
+  tracker_iou_threshold: 0.15
+  tracker_max_missed: 8
+  detection_region:
+    id: road
+    points:
+    - - 0
+      - 160
+    - - 639
+      - 160
+    - - 639
+      - 325
+    - - 0
+      - 325
+  forbidden_zones: []
