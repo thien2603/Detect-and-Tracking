@@ -1,7 +1,7 @@
 # Đối chiếu yêu cầu — 26/10/2026
 
 Kết luận: **chưa đủ căn cứ xác nhận đạt toàn bộ đề**. Các nhóm chức năng đã có mã
-và kiểm thử; còn thiếu hiệu năng độ trễ 4 camera và nghiệm thu Docker/webcam/VLC.
+và kiểm thử; Docker đã build/up và kiểm tra thực. Còn thiếu độ trễ 4 camera và webcam/VLC.
 Thư mục Drive chưa được xác minh. Đối chiếu theo đề `TTS_Tuan1.pdf` do người dùng cung cấp.
 
 ## Chức năng
@@ -28,20 +28,23 @@ Thư mục Drive chưa được xác minh. Đối chiếu theo đề `TTS_Tuan1.
 | Ctrl+C dừng sạch | Có cleanup từ demo/benchmark; integration test mới cũng kiểm tra thread/scheduler dừng. |
 | Logging file, FPS/trễ/reconnect | Có mã logging xoay vòng và số liệu theo camera; không có `print()` trong app/scripts/benchmarks. |
 | Unit test vạch/vùng | Đạt: thuộc bộ test đầy đủ ngày 26/10. |
-| Docker | Compose parse hợp lệ; Engine đã chạy ngày 23/10. Chưa build/up stack project do RAM trống giảm mạnh khi mở Docker. |
+| Docker | **Đã chạy thực**: build/up ba dịch vụ, 4 RTSP decode, API/event/snapshot/filter/hot-toggle pass. Cả ba container thoát mã 0, không OOM. Dùng profile CPU 320; chưa coi là benchmark NFR. |
 | Benchmark 1/4/8, ít nhất hai cách | Đủ sáu tổ hợp serial/microbatch, 60 giây/lượt; có thêm so sánh model chung/4 model/4 CUDA stream. Đề yêu cầu đo 8 camera, không yêu cầu 8 camera đạt 10 FPS. |
 | Chọn kiến trúc theo số liệu | Chọn shared microbatch; xem bảng benchmark. |
-| GitHub | Đã fetch origin và xác nhận source ở `743923d` trùng `origin/main` trước lần cập nhật tài liệu này. |
+| GitHub | Đã push bản `5c6b843`; cấu hình và bằng chứng Docker được bổ sung trong lần cập nhật tiếp theo. |
 | Báo cáo | Đã rút từ 10 xuống 4 trang; có link source, benchmark, nhận xét và mục còn thiếu. |
 | Demo | File local 120 giây, bốn nguồn đồng thời; 391 sự kiện trong cửa sổ ghi; đã kiểm tra giải mã. |
 | Google Drive | Chưa upload/xác minh thư mục `TranDanhThien` và quyền truy cập. |
 
 ## Kiểm tra thực hiện lại ngày 26/10
 
-- **94 test chính + 7 subtest pass, không failure/error/skip**, 89,10 giây.
+- **94 test chính + 7 subtest pass, không failure/error/skip**, chạy lại sau sửa Docker: 88,43 giây.
 - Ruff: `check app scripts tests benchmarks` pass.
 - `docker compose config --quiet`: exit 0; lệnh này không chứng minh container đã chạy.
-- JUnit mới: `tmp/criteria-pytest-complete-20261026.xml`; bản lưu trong repository:
+- Sau đó đã build/up và chạy smoke thật: `docs/verification/docker-20261026.json`;
+  shutdown ba container mã 0: `docs/verification/docker-shutdown-20261026.json`.
+  Chi tiết: [Docker validation](docker-validation-2026-10-26.md).
+- JUnit cuối: `data/docker-validation-20261026-01/tests-final.xml`; bản lưu trong repository:
   `docs/verification/pytest-20261026.xml`.
 - Dùng `.tools/bellevue-env` có `httpx2`, `pytest-timeout`, Ruff; FFmpeg 7.1 và MediaMTX 1.9.3.
 - Test API ban đầu treo trong sandbox tại `socket.socketpair()` của asyncio Windows;
@@ -64,9 +67,8 @@ ngưỡng accuracy cụ thể nên đây là giới hạn chất lượng, khôn
 ## Cần hoàn tất
 
 1. Giảm latency của camera còn lại xuống dưới 1000 ms, đo lại cùng điều kiện.
-2. Build/up Docker project, thử API/4 RTSP/event/shutdown trong container.
-3. Thử webcam thật và mở bốn RTSP bằng VLC.
-4. Upload báo cáo/demo vào Drive đúng tên, xác minh quyền xem.
+2. Thử webcam thật và mở bốn RTSP bằng VLC.
+3. Upload báo cáo/demo vào Drive đúng tên, xác minh quyền xem.
 
 Số liệu đầy đủ: [benchmark 23/10](benchmark-rerun-2026-10-23.md).
 Báo cáo: [PDF 4 trang](../reports/TranDanhThien/BaoCao_TranDanhThien.pdf),

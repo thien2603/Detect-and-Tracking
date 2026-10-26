@@ -138,7 +138,9 @@ JSON thô giữ local (thư mục data không đưa lên GitHub):\\
 \section{Kiểm thử và đối chiếu nghiệm thu}
 Test kiểm tra tracking, vạch/vùng, event, API và vòng đời tài nguyên. Integration dùng FFmpeg/MediaMTX thật, ngắt/nối lại nguồn và dừng FFmpeg để thử restart. Detector giả dùng trong test hạ tầng; benchmark hiệu năng dùng YOLO thật.
 
-\textbf{Kiểm tra ngày 26/10/2026:} \textbf{94 test chính và 7 subtest đều pass}, không lỗi/bỏ qua, trong 89,10 giây. JUnit ghi tại \path{tmp/criteria-pytest-complete-20261026.xml}. Ruff đã qua; Docker Compose parse hợp lệ. Cần môi trường có dependency dev và đường dẫn FFmpeg/MediaMTX để chạy đủ test.
+\textbf{Kiểm tra ngày 26/10/2026:} \textbf{94 test chính và 7 subtest đều pass}, không lỗi/bỏ qua; Ruff đã qua. JUnit được lưu trong \path{docs/verification/pytest-20261026.xml}. Docker đã build/up và kiểm tra thật trên CPU với profile riêng; bảng benchmark GPU ở trang 3 giữ nguyên.
+
+\textbf{Docker CPU:} \path{configs/docker-cpu.yaml} dùng ảnh 320, render tối đa $640\times360$, mục tiêu 10 FPS, replay 10 FPS. Giữ nguyên tọa độ vạch/vùng và ngưỡng bỏ ảnh cũ 700 ms. Kiểm tra cuối: 4 RTSP decode được; API có 11 sự kiện mới, snapshot, lọc và bật/tắt camera; ba container thoát mã 0, không OOM. Đây là kiểm tra chức năng, chưa phải phép đo chứng minh đạt FPS/latency.
 
 {\small\begin{tabularx}{\linewidth}{p{58mm}p{27mm}Y}
 \toprule\rowcolor{lightblue}\textbf{Tiêu chí} & \textbf{Kết luận} & \textbf{Căn cứ / phần còn thiếu}\\\midrule
@@ -148,22 +150,21 @@ Ghi rõ máy và cách đo & Đạt & Phần cứng, cấu hình, phạm vi đo 
 Ctrl+C dừng sạch & Có bằng chứng & Cleanup các lượt hoàn tất: thoát mềm, không còn tiến trình con.\\
 Logging file, FPS/trễ/reconnect & Đạt mã & Logging xoay vòng, số liệu theo camera.\\
 Unit test vạch và polygon & Có kiểm thử & Test biên, hai chiều, cooldown, entry/reentry.\\
-Sử dụng Docker & Chưa nghiệm thu & Có Dockerfile/Compose, Engine đã chạy; chưa build/up stack vì thiếu RAM.\\
+Sử dụng Docker & Đạt chạy thực & Build/up, API, 4 RTSP, event/snapshot, hot-toggle và shutdown đều qua trên CPU.\\
 Đo 1/4/8, ít nhất hai cách & Đạt đo đạc & Sáu tổ hợp serial/microbatch, 60 giây/lượt. Đề không yêu cầu 8 camera đạt 10 FPS.\\
 Webcam và mở RTSP bằng VLC & Còn xác minh & Có code webcam và RTSP decode thật; thiếu thiết bị/VLC.\\
 \bottomrule\end{tabularx}}
 
 \section{Hồ sơ nộp và việc còn lại}
-\textbf{Mã nguồn:} đã fetch GitHub, xác nhận \code{main} local trùng \code{origin/main} tại commit \code{743923d} trước lần cập nhật tài liệu này. Repository lưu source/config/test; model và video tải riêng.
+\textbf{Mã nguồn:} đã xác minh và push lên GitHub. Bản \code{5c6b843} là mốc trước bổ sung Docker; cấu hình CPU và bằng chứng mới đi kèm lần cập nhật này. Repository lưu source/config/test; model và video tải riêng.
 
 \textbf{Demo:} \code{Demo_TranDanhThien.mp4}, khoảng 120 giây, ghép bốn nguồn đang chạy đồng thời. Có 391 sự kiện trong khoảng ghi hình: 319 intrusion, 56 region entry, 16 line crossing. Số sự kiện không tương đương số đối tượng duy nhất. Đã giải mã toàn bộ clip để kiểm tra.
 
 \textbf{Việc chưa hoàn tất:}
 \begin{itemize}
 \item Giảm độ trễ camera còn lại xuống dưới 1000 ms và đo lại cùng điều kiện.
-\item Build/up Docker project; kiểm tra API, bốn RTSP, event và shutdown container.
 \item Thử webcam thật; mở bốn RTSP đầu ra bằng VLC.
 \item Upload PDF/MP4 vào thư mục Drive \code{TranDanhThien}, kiểm tra quyền xem.
 \end{itemize}
-\note{\textbf{Kết luận:} chức năng chính và benchmark đã có bằng chứng. Chưa đủ căn cứ xác nhận đạt toàn bộ đề vì còn độ trễ 4 camera, Docker project và các bước nghiệm thu/nộp bài nêu trên.}
+\note{\textbf{Kết luận:} chức năng chính, benchmark và Docker đã có bằng chứng. Còn thiếu độ trễ đạt cho cả 4 camera, nghiệm thu webcam/VLC và xác minh nộp Drive. Chi tiết Docker: \path{docs/docker-validation-2026-10-26.md}.}
 \end{document}

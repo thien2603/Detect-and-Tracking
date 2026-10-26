@@ -8,7 +8,7 @@ from scripts.record_demo import tile
 
 
 def test_submission_configs_have_people_and_four_distinct_views():
-    for name in ("submission-four.yaml", "submission-efficient.yaml"):
+    for name in ("submission-four.yaml", "submission-efficient.yaml", "docker-cpu.yaml"):
         data = AppConfig.model_validate(yaml.safe_load((Path("configs") / name).read_text()))
         assert len(data.cameras) == 4
         assert "cam05-crosswalk" in [camera.id for camera in data.cameras]

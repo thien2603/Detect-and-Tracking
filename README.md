@@ -3,7 +3,8 @@
 ## Kết quả kiểm tra mới nhất — 26/10/2026
 
 Mã nguồn đã có các nhóm chức năng F01–F10. Kiểm tra ngày 26/10: **94 test chính và
-7 subtest đều pass**, không skip; Ruff pass; Docker Compose parse hợp lệ.
+7 subtest đều pass**, không skip; Ruff pass. Docker đã build/up và kiểm tra thật:
+bốn RTSP, API, sự kiện/snapshot, hot-toggle và ba container dừng mã 0.
 Chạy test trong môi trường đã cài `.[inference,dev]`, có FFmpeg/MediaMTX.
 
 - [Đối chiếu tiêu chí hiện tại](docs/criteria-audit-2026-10-26.md).
@@ -12,7 +13,9 @@ Chạy test trong môi trường đã cài `.[inference,dev]`, có FFmpeg/MediaM
 - [Benchmark 1/4/8 camera](docs/benchmark-rerun-2026-10-23.md): 4 camera microbatch
   đạt trung bình 11,07 FPS ảnh mới/camera, nhưng max latency 1129 ms nên mới đạt
   độ trễ ở 3/4 camera. 8 camera chưa chạy thời gian thực.
-- Còn thiếu nghiệm thu Docker project, webcam vật lý, VLC và upload hồ sơ Drive.
+- [Kiểm tra Docker và hướng dẫn chạy lại](docs/docker-validation-2026-10-26.md).
+  Profile CPU dùng ảnh 320, render 640×360, mục tiêu 10 FPS; lượt này xác minh chức năng.
+- Còn thiếu latency toàn bộ 4 camera, nghiệm thu webcam vật lý, VLC và upload Drive.
 
 Các phần dưới giữ hướng dẫn và lịch sử triển khai; dùng bảng đối chiếu mới nhất
 để xác định trạng thái nghiệm thu.
@@ -135,9 +138,10 @@ docker compose up --build
 ```
 
 Compose gồm `mediamtx`, `replay` và `app`: replay phát bốn file cấu hình trong
-`configs/submission-four.yaml` thành RTSP, app nhận và xử lý. Model và dữ liệu
-được mount từ máy chủ. Dockerfile dùng CPU; Engine đã khởi động thành công nhưng
-chưa build/up stack project vì hạn chế RAM. Chỉ chạy một worker Uvicorn.
+`configs/docker-cpu.yaml` thành RTSP, app nhận và xử lý. Model và dữ liệu
+được mount từ máy chủ. Dockerfile dùng CPU; đã build/up, kiểm tra API, bốn RTSP,
+event/snapshot và shutdown trên máy Windows ngày 26/10. Profile GPU benchmark
+được giữ riêng, không lấy lượt smoke CPU thay cho benchmark. Chỉ chạy một worker Uvicorn.
 
 ## Cấu trúc và cách sửa
 

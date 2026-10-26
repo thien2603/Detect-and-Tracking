@@ -1,0 +1,13 @@
+# Optional isolated host ports and evidence for Docker smoke tests.
+# Invoke after docker-compose.yml; tested with Docker Compose 2.40.3.
+services:
+  mediamtx:
+    ports: !override
+      - "127.0.0.1:18554:8554"
+  app:
+    ports: !override
+      - "127.0.0.1:18000:8000"
+    volumes:
+      - ./data/docker-smoke/database:/app/data/database
+      - ./data/docker-smoke/snapshots:/app/data/snapshots
+      - ./data/docker-smoke/logs:/app/logs

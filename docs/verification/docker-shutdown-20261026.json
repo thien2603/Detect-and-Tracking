@@ -1,0 +1,53 @@
+[
+  {
+    "container": "3008cb027ef40a64df0d6bf6051031d591b2c4fa55dc6e8a11a386c1e4c63b73",
+    "name": "/tracking-docker-check-app-1",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-26T14:40:34.426391071Z",
+      "FinishedAt": "2026-10-26T14:42:24.485879639Z"
+    }
+  },
+  {
+    "container": "177b1beea0f5baa1fe3a15e7bf4fb4f135d3e0ad526c921a0753626a89f825b2",
+    "name": "/tracking-docker-check-mediamtx-1",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-26T14:40:33.540254645Z",
+      "FinishedAt": "2026-10-26T14:42:26.08231773Z"
+    }
+  },
+  {
+    "container": "495ad352c94617257e8e9c593064cc354a570561ab0b31f69420d8c627acfcd8",
+    "name": "/tracking-docker-check-replay-1",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-26T14:40:33.983046664Z",
+      "FinishedAt": "2026-10-26T14:42:25.759165628Z"
+    }
+  }
+]
