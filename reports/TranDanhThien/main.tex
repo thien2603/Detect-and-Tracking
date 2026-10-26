@@ -1,0 +1,169 @@
+% !TeX program = xelatex
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{TeX Gyre Termes}}
+\IfFontExistsTF{Consolas}{\setmonofont{Consolas}[Scale=0.84]}{\setmonofont{Latin Modern Mono}}
+\usepackage[margin=2cm,headheight=15pt]{geometry}
+\usepackage{booktabs,tabularx,array,fancyhdr,enumitem,amssymb}
+\usepackage[table]{xcolor}
+\usepackage[unicode,colorlinks=true,urlcolor=blue]{hyperref}
+\hypersetup{pdftitle={Hệ thống xử lý video đa camera},pdfauthor={Trần Danh Thiện}}
+\definecolor{navy}{HTML}{173B61}
+\definecolor{lightblue}{HTML}{E6F0F8}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.17}
+\setlist[itemize]{leftmargin=16pt,itemsep=2pt,topsep=3pt}
+\pagestyle{fancy}\fancyhf{}
+\fancyhead[L]{\small Trần Danh Thiện | Xử lý video đa camera}
+\fancyhead[R]{\small 26/10/2026}
+\fancyfoot[C]{\thepage}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\note}[1]{\par\smallskip\colorbox{lightblue}{\parbox{\dimexpr\linewidth-2\fboxsep\relax}{#1}}\par\smallskip}
+\begin{document}
+\begin{center}
+{\fontsize{21}{25}\selectfont\color{navy}\bfseries BÁO CÁO KỸ THUẬT}\\[6pt]
+{\fontsize{16}{20}\selectfont\color{navy}\bfseries HỆ THỐNG XỬ LÝ VIDEO ĐA CAMERA}\\[8pt]
+\textbf{Người thực hiện: Trần Danh Thiện}\\
+\href{https://github.com/thien2603/Detect-and-Tracking}{github.com/thien2603/Detect-and-Tracking}\\
+{\small Cập nhật 26/10/2026; benchmark đo ngày 23/10/2026.}
+\end{center}
+\note{\textbf{Kết quả chính:} chạy đồng thời 4 nguồn, nhận diện người/xe, tracking, đếm hai chiều và cảnh báo vùng. Microbatch đạt trung bình \textbf{11,07 FPS ảnh mới/camera}; độ trễ lớn nhất \textbf{1129 ms}, chỉ 3/4 camera đạt dưới 1 giây. Chưa đạt toàn bộ tiêu chí hiệu năng.}
+
+\section{Kiến trúc và luồng hoạt động}
+Bốn nguồn gồm ba góc Bellevue và một góc Crosswalk có người đi bộ. Khi benchmark, file video được phát lại qua RTSP; mỗi camera có tracker, bộ đếm và đường RTSP đầu ra riêng.
+\begin{center}
+\fcolorbox{navy}{lightblue}{\parbox{0.92\linewidth}{\centering
+Nguồn $\rightarrow$ Capture giữ ảnh mới nhất $\rightarrow$ Scheduler $\rightarrow$ YOLO11n\\[3pt]
+$\downarrow$\\
+Tracker từng camera $\rightarrow$ Quy tắc vạch / polygon\\
+$\swarrow$\hspace{40mm}$\searrow$\\
+SQLite + snapshot\hspace{12mm}Vẽ kết quả $\rightarrow$ FFmpeg $\rightarrow$ RTSP}}
+\end{center}
+Capture độc lập giúp một nguồn lỗi không kéo các nguồn khác dừng theo. Scheduler giữ tối đa một yêu cầu chờ/camera; ảnh cũ được thay bằng ảnh mới. Ghi bằng chứng và phát RTSP tách khỏi suy luận. FastAPI cung cấp trạng thái, FPS, bật/tắt camera và truy vấn sự kiện.
+
+{\small\begin{tabularx}{\linewidth}{p{64mm}Y}
+\toprule\rowcolor{lightblue}\textbf{Nhóm mã nguồn} & \textbf{Chức năng}\\\midrule
+\path{app/camera/capture.py} & Đọc file/RTSP/webcam, latest-frame, reconnect.\\
+\path{app/inference/} & YOLO, warmup và điều phối batch.\\
+\path{app/inference/tracker.py}; \path{motion.py} & IoU, Kalman và ID riêng theo camera.\\
+\path{app/pipeline.py}; \path{app/events/} & Quy tắc đếm/vùng; SQLite, snapshot.\\
+\path{app/streaming/}; \path{app/manager.py} & Overlay, FFmpeg và vòng đời camera.\\
+\path{app/main.py}; \path{configs/} & API và cấu hình YAML.\\
+\bottomrule\end{tabularx}}
+
+\section{Thuật toán và quy tắc sự kiện}
+\textbf{Detection/tracking:} YOLO11n tìm bbox và lớp đối tượng. Tracker ghép bbox cùng lớp bằng IoU; bản tối ưu dùng Kalman dự đoán vị trí trước khi ghép, hỗ trợ chuyển động nhanh. Che khuất hoặc thiếu detection lâu vẫn có thể gây đổi ID.
+
+\textbf{Đếm qua vạch:} lấy tâm cạnh dưới bbox; tăng bộ đếm theo chiều khi điểm đổi phía và cắt đoạn vạch hữu hạn, có deadband/cooldown.
+
+\textbf{Vào vùng:} kiểm tra điểm chân hộp trong polygon; ghi sự kiện khi đi vào, không ghi lại mỗi frame nếu đứng trong vùng. Lý do \code{first_seen_inside} được lưu riêng khi lần đầu thấy đã ở trong vùng. Retry cùng event ID không chèn trùng vào SQLite.
+
+\note{\textbf{Giới hạn:} dự đoán chỉ để vẽ; sự kiện dùng bbox YOLO đo thật. Hộp quá tuổi 700 ms bị ẩn. Chưa có ground truth để công bố accuracy; đổi track ID có thể gây đếm lại cùng vật thể.}
+
+\clearpage
+\section{Cấu hình và yêu cầu chức năng}
+Cấu hình chính: \path{configs/submission-optimized.yaml}. Vạch/polygon được căn thủ công theo từng góc camera cố định, lưu tọa độ pixel trong YAML. Vùng xanh khoảng $3/4$ và đỏ khoảng $1/4$ ROI là vùng minh họa, chưa quy đổi thành diện tích thực.
+
+{\small\begin{tabularx}{\linewidth}{p{42mm}Y}
+\toprule\rowcolor{lightblue}\textbf{Tham số} & \textbf{Giá trị trong ma trận 1/4/8 camera}\\\midrule
+Model / thiết bị & YOLO11n, CUDA RTX 3050 Laptop, FP16.\\
+Ảnh / confidence & \code{imgsz=480}, ảnh vuông; confidence 0,25.\\
+Lớp & person, car, motorcycle, bus, truck.\\
+Điều phối & Serial: batch 1; microbatch: tối đa 4, chờ 15 ms.\\
+Render / detect & Bất đồng bộ; \code{detect_interval=2}; Kalman/IoU.\\
+RTSP & H.264 NVENC, mục tiêu 14 FPS, tối đa $960\times540$, giữ tỷ lệ.\\
+Vòng đời & Hàng đợi hữu hạn, bỏ ảnh quá cũ, tự khởi động lại FFmpeg.\\
+\bottomrule\end{tabularx}}
+
+{\small\begin{tabularx}{\linewidth}{p{9mm}p{63mm}Y}
+\toprule\rowcolor{lightblue}\textbf{Mã} & \textbf{Yêu cầu đề bài} & \textbf{Kết quả đối chiếu}\\\midrule
+F01 & File/RTSP/webcam; reconnect; cô lập lỗi & File/RTSP đã chạy; reconnect có test tích hợp. Webcam có code, chưa thử thiết bị thật.\\
+F02 & Luôn xử lý frame mới nhất & Có latest-frame slot, queue hữu hạn và test thay yêu cầu cũ.\\
+F03 & YOLO v8+, người/xe; class/conf/imgsz từ config & YOLO11n; có người/xe thật trong nguồn; tham số YAML.\\
+F04 & Tracking & ID theo camera; test cùng lớp, mất quan sát ngắn và chuyển động nhanh.\\
+F05 & Đếm qua vạch hai chiều & Unit test vạch hữu hạn, deadband/cooldown; demo có line crossing.\\
+F06 & Phát hiện vào polygon & Test biên, entry/stay/exit/reentry; demo có intrusion.\\
+F07 & Một event/lần vi phạm, SQLite và ảnh & Có UTC, camera, track, loại và snapshot; retry không chèn trùng.\\
+F08 & Overlay, RTSP riêng, VLC, FFmpeg restart & RTSP decode thật, overlay và restart có kiểm thử; chưa nghiệm thu VLC GUI.\\
+F09 & YAML; fail-fast; thêm camera bằng config & Schema/preflight trước khi chạy; test cấu hình sai và thêm nguồn.\\
+F10 & FastAPI trạng thái/FPS, bật/tắt, lọc event & Có endpoint và test API, lọc camera/thời gian, snapshot.\\
+\bottomrule\end{tabularx}}
+
+\textbf{API chính:} \code{GET /api/v1/cameras}; \code{PUT /api/v1/cameras/{id}/enabled}; \code{GET /api/v1/events}. Tài liệu tương tác tại \code{/docs} khi service đang chạy.
+
+\textbf{Điểm cần phân biệt:} có đầy đủ các nhóm chức năng trong mã nguồn, nhưng F01 còn thiếu nghiệm thu webcam vật lý, F08 còn thiếu mở bằng VLC. Độ chính xác đếm/tracking chưa được đo bằng nhãn chuẩn; đề không đặt ngưỡng accuracy cụ thể.
+
+\clearpage
+\section{Benchmark và lựa chọn kiến trúc}
+\textbf{Máy đo:} Lenovo Legion 5 15ARH7; Ryzen 5 6600H (6 nhân/12 luồng); RAM lắp 8 GB, dùng được khoảng 7,19 GiB; RTX 3050 Laptop 4 GB, driver 546.92. Windows build 26200, Python 3.10.11, PyTorch CUDA, MediaMTX 1.9.3.
+
+Mỗi phương án đo 60 giây sau 8 giây warmup. Tám camera là tám luồng logic lấy từ bốn video. \textbf{Detect FPS} đếm ảnh YOLO hoàn tất; \textbf{unique FPS} đếm timestamp ảnh nguồn khác nhau giải mã từ RTSP đầu ra. Render bất đồng bộ giúp ảnh xem mới hơn nhịp detect.
+
+Độ trễ đo từ replay tới client giải mã RTSP trên cùng máy; chưa gồm hiển thị VLC và phơi sáng camera vật lý. Cột trễ đạt dùng max $<1000$ ms và marker coverage $\geq95\%$. FPS là trung bình camera; RAM là peak RSS cộng các tiến trình, có thể tính trùng trang dùng chung.
+
+{\small\begin{tabularx}{\linewidth}{r Y r r r c r}
+\toprule\rowcolor{lightblue}\textbf{Cam} & \textbf{Cách chạy} & \textbf{Detect} & \textbf{Unique} & \textbf{Max ms} & \textbf{Trễ đạt} & \textbf{RAM MiB}\\\midrule
+1 & Serial & 6,48 & 12,55 & 639 & 1/1 & 1555\\
+1 & Microbatch & 6,52 & 12,38 & 723 & 1/1 & 2036\\
+4 & Serial & 1,14 & 10,52 & 1091 & 1/4 & 1964\\
+4 & Microbatch & 3,05 & 11,07 & 1129 & 3/4 & 2583\\
+8 & Serial & 0,17 & 0,91 & 10191 & 0/8 & 1426\\
+8 & Microbatch & 0,37 & 0,98 & 7277 & 0/8 & 1582\\
+\bottomrule\end{tabularx}}
+
+\textbf{Nhận xét:} 1 camera đạt FPS và độ trễ. 4 camera đạt unique FPS $\geq10$ cho từng camera, nhưng chưa đạt độ trễ cho tất cả. 8 camera quá tải; một số luồng gặp lỗi encoder NVENC và restart, nên kết quả phản ánh cả giới hạn xử lý/phát video.
+
+\textbf{Chọn shared microbatch:} ở 4 camera, detect tăng từ 1,14 lên 3,05 FPS/camera; CPU tổng giảm từ 702\% xuống 646\%; số camera đạt độ trễ tăng từ 1/4 lên 3/4. CPU cộng theo tiến trình có thể vượt 100\% trên máy nhiều nhân. Max 1129 ms vẫn chưa đạt ngưỡng đề.
+
+Đối chứng riêng cùng 4 nguồn, FP32 và libx264 cho bảng dưới. Cấu hình này khác bảng trên, chỉ dùng so sánh số model trong cùng phép thử.
+
+{\small\begin{tabularx}{\linewidth}{Y r r r}
+\toprule\rowcolor{lightblue}\textbf{Phương án} & \textbf{Detect FPS/cam} & \textbf{CPU \%} & \textbf{RSS MiB}\\\midrule
+Một model chung / batch & 5,01 & 576 & 1937\\
+Bốn model riêng & 4,82 & 675 & 1991\\
+Bốn model + CUDA stream riêng & 4,94 & 676 & 2008\\
+\bottomrule\end{tabularx}}
+Bốn model trên cùng GPU chưa cải thiện tốc độ; vì vậy giữ model chung. Mỗi cấu hình mới đo một lượt, chưa có kiểm tra dài hạn hoặc khoảng tin cậy.
+
+\textbf{Bằng chứng:} hướng dẫn và số liệu trong repository:\\
+{\small\path{docs/benchmark-rerun-2026-10-23.md}\\
+\path{docs/model-modes-2026-10-23.md}}\par
+JSON thô giữ local (thư mục data không đưa lên GitHub):\\
+{\small\path{data/benchmark-rerun-20261023-01/}\\
+\path{data/benchmark-rerun-20261023-4-8-02/}}
+
+\clearpage
+\section{Kiểm thử và đối chiếu nghiệm thu}
+Test kiểm tra tracking, vạch/vùng, event, API và vòng đời tài nguyên. Integration dùng FFmpeg/MediaMTX thật, ngắt/nối lại nguồn và dừng FFmpeg để thử restart. Detector giả dùng trong test hạ tầng; benchmark hiệu năng dùng YOLO thật.
+
+\textbf{Kiểm tra ngày 26/10/2026:} \textbf{94 test chính và 7 subtest đều pass}, không lỗi/bỏ qua, trong 89,10 giây. JUnit ghi tại \path{tmp/criteria-pytest-complete-20261026.xml}. Ruff đã qua; Docker Compose parse hợp lệ. Cần môi trường có dependency dev và đường dẫn FFmpeg/MediaMTX để chạy đủ test.
+
+{\small\begin{tabularx}{\linewidth}{p{58mm}p{27mm}Y}
+\toprule\rowcolor{lightblue}\textbf{Tiêu chí} & \textbf{Kết luận} & \textbf{Căn cứ / phần còn thiếu}\\\midrule
+4 camera, mỗi camera $\geq10$ FPS & Đạt đầu ra & Benchmark 4/4 theo unique FPS; demo 120 giây.\\
+Trễ đầu-cuối $<1$ giây & Chưa đạt đủ & Microbatch 3/4; max 1129 ms. Chưa đo tới VLC.\\
+Ghi rõ máy và cách đo & Đạt & Phần cứng, cấu hình, phạm vi đo ở trang 3.\\
+Ctrl+C dừng sạch & Có bằng chứng & Cleanup các lượt hoàn tất: thoát mềm, không còn tiến trình con.\\
+Logging file, FPS/trễ/reconnect & Đạt mã & Logging xoay vòng, số liệu theo camera.\\
+Unit test vạch và polygon & Có kiểm thử & Test biên, hai chiều, cooldown, entry/reentry.\\
+Sử dụng Docker & Chưa nghiệm thu & Có Dockerfile/Compose, Engine đã chạy; chưa build/up stack vì thiếu RAM.\\
+Đo 1/4/8, ít nhất hai cách & Đạt đo đạc & Sáu tổ hợp serial/microbatch, 60 giây/lượt. Đề không yêu cầu 8 camera đạt 10 FPS.\\
+Webcam và mở RTSP bằng VLC & Còn xác minh & Có code webcam và RTSP decode thật; thiếu thiết bị/VLC.\\
+\bottomrule\end{tabularx}}
+
+\section{Hồ sơ nộp và việc còn lại}
+\textbf{Mã nguồn:} đã fetch GitHub, xác nhận \code{main} local trùng \code{origin/main} tại commit \code{743923d} trước lần cập nhật tài liệu này. Repository lưu source/config/test; model và video tải riêng.
+
+\textbf{Demo:} \code{Demo_TranDanhThien.mp4}, khoảng 120 giây, ghép bốn nguồn đang chạy đồng thời. Có 391 sự kiện trong khoảng ghi hình: 319 intrusion, 56 region entry, 16 line crossing. Số sự kiện không tương đương số đối tượng duy nhất. Đã giải mã toàn bộ clip để kiểm tra.
+
+\textbf{Việc chưa hoàn tất:}
+\begin{itemize}
+\item Giảm độ trễ camera còn lại xuống dưới 1000 ms và đo lại cùng điều kiện.
+\item Build/up Docker project; kiểm tra API, bốn RTSP, event và shutdown container.
+\item Thử webcam thật; mở bốn RTSP đầu ra bằng VLC.
+\item Upload PDF/MP4 vào thư mục Drive \code{TranDanhThien}, kiểm tra quyền xem.
+\end{itemize}
+\note{\textbf{Kết luận:} chức năng chính và benchmark đã có bằng chứng. Chưa đủ căn cứ xác nhận đạt toàn bộ đề vì còn độ trễ 4 camera, Docker project và các bước nghiệm thu/nộp bài nêu trên.}
+\end{document}

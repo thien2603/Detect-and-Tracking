@@ -1,5 +1,8 @@
 # Đối chứng tiêu chí cuối — 23/10/2026
 
+> Bản lịch sử ngày 23/10. Xem [đối chiếu ngày 26/10/2026](criteria-audit-2026-10-26.md)
+> để biết test mới, trạng thái GitHub đã xác minh và báo cáo rút gọn 4 trang.
+
 Tác giả: **Trần Danh Thiện**  
 GitHub do người dùng cung cấp: <https://github.com/thien2603/Detect-and-Tracking.git>
 

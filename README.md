@@ -1,5 +1,22 @@
 # Tracking Detection — mã nguồn đầy đủ
 
+## Kết quả kiểm tra mới nhất — 26/10/2026
+
+Mã nguồn đã có các nhóm chức năng F01–F10. Kiểm tra ngày 26/10: **94 test chính và
+7 subtest đều pass**, không skip; Ruff pass; Docker Compose parse hợp lệ.
+Chạy test trong môi trường đã cài `.[inference,dev]`, có FFmpeg/MediaMTX.
+
+- [Đối chiếu tiêu chí hiện tại](docs/criteria-audit-2026-10-26.md).
+- [Báo cáo ngắn 4 trang](reports/TranDanhThien/BaoCao_TranDanhThien.pdf),
+  [nguồn LaTeX](reports/TranDanhThien/main.tex).
+- [Benchmark 1/4/8 camera](docs/benchmark-rerun-2026-10-23.md): 4 camera microbatch
+  đạt trung bình 11,07 FPS ảnh mới/camera, nhưng max latency 1129 ms nên mới đạt
+  độ trễ ở 3/4 camera. 8 camera chưa chạy thời gian thực.
+- Còn thiếu nghiệm thu Docker project, webcam vật lý, VLC và upload hồ sơ Drive.
+
+Các phần dưới giữ hướng dẫn và lịch sử triển khai; dùng bảng đối chiếu mới nhất
+để xác định trạng thái nghiệm thu.
+
 Bản dựng lại 0.2.0, ngày 20/10/2026. Đây là mã nguồn được tạo lại sau khi workspace
 cũ bị đặt lại, không phải bản khôi phục byte-for-byte của ZIP cũ. Repository chỉ lưu
 mã nguồn, cấu hình, tài liệu và tests; model, video/dataset và kết quả sinh ra không
@@ -117,9 +134,10 @@ Với Compose, đặt host RTSP trong mạng container là `mediamtx`, đã có 
 docker compose up --build
 ```
 
-Compose gồm ứng dụng và MediaMTX, dùng video file làm nguồn trực tiếp, không cần dịch vụ replay riêng.
-Model và dữ liệu được mount từ máy chủ. Dockerfile là CPU; chưa xác minh Docker/Windows trên
-máy của người dùng. Chỉ chạy một worker Uvicorn để tránh nhân đôi camera và model.
+Compose gồm `mediamtx`, `replay` và `app`: replay phát bốn file cấu hình trong
+`configs/submission-four.yaml` thành RTSP, app nhận và xử lý. Model và dữ liệu
+được mount từ máy chủ. Dockerfile dùng CPU; Engine đã khởi động thành công nhưng
+chưa build/up stack project vì hạn chế RAM. Chỉ chạy một worker Uvicorn.
 
 ## Cấu trúc và cách sửa
 
@@ -165,8 +183,9 @@ Config 4 nguồn có cả người: `configs/submission-four.yaml`; cấu hình 
 tài nguyên: `configs/submission-efficient.yaml`. Bốn config Bellevue cũ được giữ nguyên.
 
 Hướng dẫn service RTSP bốn camera, benchmark và trạng thái kiểm tra thực tế:
-[Chạy realtime và benchmark](docs/realtime-and-benchmark.md). Smoke test đã xử lý
-được bốn camera đồng thời nhưng **chưa đạt ≥10 FPS đầu ra/camera và độ trễ dưới 1 giây**.
+[Chạy realtime và benchmark](docs/realtime-and-benchmark.md). Lượt đo mới ngày 23/10
+đạt unique output ≥10 FPS ở cả bốn camera nhưng còn thiếu latency: microbatch chỉ
+3/4 camera có max <1 giây. Xem [số liệu mới](docs/benchmark-rerun-2026-10-23.md).
 
 - Tracker IoU có thể đổi ID khi che khuất, bỏ sót hoặc xe chuyển động nhanh. Chưa có đánh giá IDF1/MOTA.
 - `entry`: đã quan sát cùng ID bên ngoài rồi vào vùng. `first_seen_inside`: lần đầu thấy đã trong vùng.
