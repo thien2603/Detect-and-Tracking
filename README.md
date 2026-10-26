@@ -20,6 +20,25 @@ Chạy test trong môi trường đã cài `.[inference,dev]`, có FFmpeg/MediaM
 Các phần dưới giữ hướng dẫn và lịch sử triển khai; dùng bảng đối chiếu mới nhất
 để xác định trạng thái nghiệm thu.
 
+## Xem trực tiếp bốn camera
+
+Sau khi chuẩn bị model/video, chạy ba dịch vụ trên cổng riêng và mở bảng xem:
+
+```powershell
+docker compose -p tracking-docker-check -f docker-compose.yml -f configs/docker-smoke.compose.yaml up -d --no-build
+python -m scripts.view_cameras --api http://127.0.0.1:18000 --port 18001
+```
+
+Mở `http://127.0.0.1:18001` để xem bốn camera cùng bbox, ID, vạch và vùng.
+Nếu chưa có image, chạy `docker compose build app` trước. Trình xem chỉ bind
+localhost và chỉ đọc ảnh/trạng thái API; không khởi tạo thêm model.
+Trang lấy JPEG khoảng 2 lần/giây để giảm tải, khác FPS detect và FPS RTSP.
+Nút tạm dừng chỉ dừng cập nhật trang. Dừng viewer bằng Ctrl+C; dừng camera bằng:
+
+```powershell
+docker compose -p tracking-docker-check -f docker-compose.yml -f configs/docker-smoke.compose.yaml stop --timeout 45
+```
+
 Bản dựng lại 0.2.0, ngày 20/10/2026. Đây là mã nguồn được tạo lại sau khi workspace
 cũ bị đặt lại, không phải bản khôi phục byte-for-byte của ZIP cũ. Repository chỉ lưu
 mã nguồn, cấu hình, tài liệu và tests; model, video/dataset và kết quả sinh ra không
